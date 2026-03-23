@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import axios from "axios";
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get("access_token")?.value;
@@ -8,14 +7,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const backendResponse = await axios.get(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/users/my-profile`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  try {
+    const backendResponse = await fetch(
+      `${process.env.BASE_URL}/users/my-profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  return NextResponse.json(backendResponse.data);
+    if (!backendResponse.ok) {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: backendResponse.status }
+      );
+    }
+
+    const data = await backendResponse.json();
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ message: "Internal error" }, { status: 500 });
+  }
 }

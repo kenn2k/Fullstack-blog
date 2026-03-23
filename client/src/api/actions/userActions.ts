@@ -1,6 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../instances/axiosInstance";
 import { User } from "@/types";
+import axios from "axios";
+
+interface ApiError {
+  message: string;
+}
 
 export const registerUser = createAsyncThunk(
   "user/register",
@@ -8,10 +13,13 @@ export const registerUser = createAsyncThunk(
     try {
       const response = await axiosInstance.post("/api/users/register", data);
       return response.data;
-    } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message || "Registration failed";
-      return rejectWithValue(errorMessage);
+    } catch (error: unknown) {
+      if (axios.isAxiosError<ApiError>(error)) {
+        const errorMessage =
+          error.response?.data?.message || "Registration failed";
+        return rejectWithValue(errorMessage);
+      }
+      return rejectWithValue("Registration failed");
     }
   }
 );
@@ -23,9 +31,12 @@ export const loginUser = createAsyncThunk(
       const response = await axiosInstance.post("/api/auth/login", data);
 
       return response.data;
-    } catch (error: any) {
-      const message = error.response?.data?.message || "Login failed";
-      return rejectWithValue(message);
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const message = error.response?.data?.message || "Login failed";
+        return rejectWithValue(message);
+      }
+      return rejectWithValue("Login failed");
     }
   }
 );
@@ -36,11 +47,13 @@ export const getCurrentUser = createAsyncThunk(
     try {
       const response = await axiosInstance.get("/api/users/my-profile");
       return response.data;
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        return rejectWithValue("Unauthorized");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          return rejectWithValue("Unauthorized");
+        }
       }
-      throw err;
+      throw error;
     }
   }
 );

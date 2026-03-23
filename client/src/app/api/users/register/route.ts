@@ -1,13 +1,31 @@
-import axios from "axios";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  const backendResponse = await axios.post(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/users/register`,
-    body
-  );
+    const backendResponse = await fetch(
+      `${process.env.BASE_URL}/users/register`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      }
+    );
 
-  return NextResponse.json(backendResponse.data);
+    const data = await backendResponse.json();
+
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
+    }
+
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ message: "Internal error" }, { status: 500 });
+  }
 }
