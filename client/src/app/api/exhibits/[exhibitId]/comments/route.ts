@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import axios from "axios";
 
 export async function GET(
   req: NextRequest,
@@ -7,18 +6,25 @@ export async function GET(
 ) {
   const { exhibitId } = await params;
 
-  const token = req.cookies.get("access_token")?.value;
+  try {
+    const backendResponse = await fetch(
+      `${process.env.BASE_URL}/api/exhibits/${exhibitId}/comments`,
+      { cache: "no-store" }
+    );
 
-  const backendResponse = await axios.get(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/exhibits/${exhibitId}/comments`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const data = await backendResponse.json();
+
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
     }
-  );
 
-  return NextResponse.json(backendResponse.data);
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ message: "Internal error" }, { status: 500 });
+  }
 }
 
 export async function POST(
@@ -27,17 +33,37 @@ export async function POST(
 ) {
   const { exhibitId } = await params;
   const token = req.cookies.get("access_token")?.value;
-  const body = await req.json();
 
-  const backendResponse = await axios.post(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/exhibits/${exhibitId}/comments`,
-    body,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  if (!token) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+
+    const backendResponse = await fetch(
+      `${process.env.BASE_URL}/api/exhibits/${exhibitId}/comments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      }
+    );
+
+    const data = await backendResponse.json();
+
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
     }
-  );
 
-  return NextResponse.json(backendResponse.data);
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ message: "Internal error" }, { status: 500 });
+  }
 }

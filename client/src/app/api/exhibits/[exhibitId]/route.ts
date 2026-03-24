@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import axios from "axios";
 
 export async function DELETE(
   req: NextRequest,
@@ -16,15 +15,28 @@ export async function DELETE(
   if (!token) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+  try {
+    const backendResponse = await fetch(
+      `${process.env.BASE_URL}/api/exhibits/${exhibitId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-  const backendResponse = await axios.delete(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/exhibits/${exhibitId}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const data = await backendResponse.json();
+
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
     }
-  );
 
-  return NextResponse.json(backendResponse.data);
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ message: "Internal error" }, { status: 500 });
+  }
 }

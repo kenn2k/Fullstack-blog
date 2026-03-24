@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import axios from "axios";
 import path from "path";
 
 export async function GET(
@@ -21,17 +20,27 @@ export async function GET(
     return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
   }
   try {
-    const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/exhibits/static/${safeFilename}`,
-      { responseType: "arraybuffer" }
+    const response = await fetch(
+      `${process.env.BASE_URL}/api/exhibits/static/${safeFilename}`
     );
 
-    return new NextResponse(response.data, {
+    if (!response.ok) {
+      return NextResponse.json({ error: "File not found" }, { status: 404 });
+    }
+
+    const buffer = await response.arrayBuffer();
+    const contentType =
+      response.headers.get("content-type") ?? "application/octet-stream";
+
+    return new NextResponse(buffer, {
       headers: {
-        "Content-Type": response.headers["content-type"],
+        "Content-Type": contentType,
       },
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 }

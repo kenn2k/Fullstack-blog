@@ -45,7 +45,7 @@ export const getCurrentUser = createAsyncThunk(
   "user/me",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get("/users/my-profile");
+      const response = await axiosInstance.get("/api/users/my-profile");
       return response.data;
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
