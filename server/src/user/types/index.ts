@@ -3,3 +3,12 @@ export interface RegisterUser {
   username: string;
   password: string;
 }
+
+export interface IUser {
+  id: number;
+  username: string;
+}
+
+export interface RequestWithUser extends Request {
+  user: IUser;
+}

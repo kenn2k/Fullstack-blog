@@ -40,4 +40,9 @@ export class UserService {
       username: savedUser.username,
     };
   }
+
+  /* Get profile */
+  getUsersProfile(id: number) {
+    return this.userRepository.findOne({ where: { id } });
+  }
 }

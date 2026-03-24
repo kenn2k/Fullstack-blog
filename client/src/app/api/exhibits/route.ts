@@ -1,38 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
-import axios from "axios";
 
 export async function POST(req: NextRequest) {
   const token = req.cookies.get("access_token")?.value;
-  const formData = await req.formData();
 
-  const backendResponse = await axios.post(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/exhibits`,
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  if (!token) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const formData = await req.formData();
+
+    const backendResponse = await fetch(
+      `${process.env.BASE_URL}/api/exhibits`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
+    );
+
+    const data = await backendResponse.json();
+
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
     }
-  );
 
-  return NextResponse.json(backendResponse.data);
+    return NextResponse.json(data);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ message: "Internal error" }, { status: 500 });
+  }
 }
 
-export async function GET(req: NextRequest) {
-  const token = req.cookies.get("access_token")?.value;
+// export async function GET(req: NextRequest) {
+//   const token = req.cookies.get("access_token")?.value;
 
-  const { searchParams } = new URL(req.url);
-  const page = searchParams.get("page");
+//   if (!token) {
+//     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+//   }
 
-  const backendResponse = await axios.get(
-    `${process.env.NEXT_PUBLIC_BASE_URL}/api/exhibits`,
-    {
-      params: { page },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+//   try {
+//     const { searchParams } = new URL(req.url);
+//     const page = searchParams.get("page");
 
-  return NextResponse.json(backendResponse.data);
-}
+//     const backendResponse = await fetch(
+//       `${process.env.BASE_URL}/api/exhibits?page=${page}`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       }
+//     );
+
+//     const data = await backendResponse.json();
+
+//     if (!backendResponse.ok) {
+//       return NextResponse.json(data, { status: backendResponse.status });
+//     }
+
+//     return NextResponse.json(data);
+//   } catch (error: unknown) {
+//     if (error instanceof Error) {
+//       return NextResponse.json({ message: error.message }, { status: 500 });
+//     }
+//     return NextResponse.json({ message: "Internal error" }, { status: 500 });
+//   }
+// }
