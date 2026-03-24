@@ -3,7 +3,7 @@ import axios from "axios";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ exhibitId: string }> }
+  { params }: { params: Promise<{ exhibitId: number }> }
 ) {
   const { exhibitId } = await params;
 
@@ -23,7 +23,7 @@ export async function GET(
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ exhibitId: string }> }
+  { params }: { params: Promise<{ exhibitId: number }> }
 ) {
   const { exhibitId } = await params;
   const token = req.cookies.get("access_token")?.value;

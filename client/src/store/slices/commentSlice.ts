@@ -2,13 +2,13 @@ import { createComment } from "@/api/actions/commentActions";
 import { createSlice } from "@reduxjs/toolkit";
 
 interface Comment {
-  id: string;
+  id: number;
   text: string;
   createdAt: string;
 }
 
 interface CommentState {
-  commentsByExhibit: Record<string, Comment[]>;
+  commentsByExhibit: Record<number, Comment[]>;
   activeExhibitId: number | null;
   loading: boolean;
   error: string | null;

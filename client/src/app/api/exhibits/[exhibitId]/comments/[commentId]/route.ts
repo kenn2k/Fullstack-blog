@@ -6,7 +6,7 @@ export async function DELETE(
   {
     params,
   }: {
-    params: Promise<{ exhibitId: string; commentId: string }>;
+    params: Promise<{ exhibitId: number; commentId: number }>;
   }
 ) {
   const { exhibitId, commentId } = await params;

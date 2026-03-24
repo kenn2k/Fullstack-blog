@@ -30,7 +30,7 @@ export const getAllExhibits = async (page: number) => {
   return response.data;
 };
 
-export const getExhibitById = async (id: string) => {
+export const getExhibitById = async (id: number) => {
   const response = await axiosInstance.get(`/api/exhibits/post/${id}`);
   return response.data;
 };
