@@ -38,10 +38,12 @@ export class AuthService {
     return tokens;
   }
 
+  /* Logout user */
   async logout(userId: number) {
     await this.userRepository.update(userId, { refreshTokenHash: null });
   }
 
+  /* Validate refresh token */
   async refreshTokens(userId: number, refreshToken: string) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
 
@@ -59,6 +61,7 @@ export class AuthService {
     return tokens;
   }
 
+  /* Creates access + refresh tokens in parallel */
   private async generateTokens(userId: number, username: string) {
     const payload = { id: userId, username };
 
@@ -76,6 +79,7 @@ export class AuthService {
     return { access_token, refresh_token };
   }
 
+  /* Stores hashed refresh token in database for security */
   private async saveRefreshTokenHash(userId: number, refreshToken: string) {
     const hash = await bcrypt.hash(refreshToken, 10);
     await this.userRepository.update(userId, { refreshTokenHash: hash });

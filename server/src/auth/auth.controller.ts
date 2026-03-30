@@ -47,6 +47,7 @@ export class AuthController {
     return this.authService.loginUser(req.user);
   }
 
+  /* Validates refresh token using JWT Refresh Strategy */
   @UseGuards(AuthGuard(STRATEGY.JWT_REFRESH))
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
