@@ -17,6 +17,9 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  refreshTokenHash: string | null;
+
   @OneToMany(() => Exhibit, (exhibit) => exhibit.user)
   exhibits: Exhibit[];
 

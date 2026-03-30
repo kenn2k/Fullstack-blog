@@ -37,11 +37,12 @@ export class CommentService {
 
   async getAllComments(exhibitId: number) {
     try {
-      return await this.commentRepository.findAndCount({
+      const comments = await this.commentRepository.find({
         where: { exhibit: { id: exhibitId } },
         relations: ['user'],
         order: { id: 'DESC' },
       });
+      return comments;
     } catch (error) {
       console.log('Get comments error', error);
       throw new InternalServerErrorException('Comments failed to load');

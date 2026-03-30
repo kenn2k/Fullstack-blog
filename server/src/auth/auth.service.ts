@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/user/entities/user.entity';
@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dtos/login.dto';
 import { IUser } from './types';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -13,6 +14,7 @@ export class AuthService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   /* Validate user credentials */
@@ -30,10 +32,52 @@ export class AuthService {
   }
 
   /* Generate JWT token for a validated user */
-  loginUser(user: IUser) {
-    const payload = { username: user.username, id: user.id };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+  async loginUser(user: IUser) {
+    const tokens = await this.generateTokens(user.id, user.username);
+    await this.saveRefreshTokenHash(user.id, tokens.refresh_token);
+    return tokens;
+  }
+
+  async logout(userId: number) {
+    await this.userRepository.update(userId, { refreshTokenHash: null });
+  }
+
+  async refreshTokens(userId: number, refreshToken: string) {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+
+    if (!user?.refreshTokenHash) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const isValid = await bcrypt.compare(refreshToken, user.refreshTokenHash);
+    if (!isValid) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const tokens = await this.generateTokens(user.id, user.username);
+    await this.saveRefreshTokenHash(user.id, tokens.refresh_token);
+    return tokens;
+  }
+
+  private async generateTokens(userId: number, username: string) {
+    const payload = { id: userId, username };
+
+    const [access_token, refresh_token] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get('JWT_ACCESS_SECRET'),
+        expiresIn: this.configService.get('JWT_ACCESS_EXPIRES_IN'),
+      }),
+      this.jwtService.signAsync(payload, {
+        secret: this.configService.get('JWT_REFRESH_SECRET'),
+        expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN'),
+      }),
+    ]);
+
+    return { access_token, refresh_token };
+  }
+
+  private async saveRefreshTokenHash(userId: number, refreshToken: string) {
+    const hash = await bcrypt.hash(refreshToken, 10);
+    await this.userRepository.update(userId, { refreshTokenHash: hash });
   }
 }
